@@ -1,0 +1,23 @@
+{ 
+    email {$ACME_EMAIL:admin@example.net}
+}
+
+{$CONTROL_FQDN} {
+    encode zstd gzip
+
+    @dashboard path /dashboard*
+    handle @dashboard {
+        respond "Dashboard is local-only. Use http://127.0.0.1:8787 on the host." 403
+    }
+
+    handle {
+        reverse_proxy headscale:8080
+    }
+
+    header {
+        X-Content-Type-Options nosniff
+        Referrer-Policy no-referrer
+        X-Frame-Options DENY
+        -Server
+    }
+}

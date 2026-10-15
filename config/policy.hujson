@@ -1,0 +1,23 @@
+{
+  // Replace the sample address with the actual stable tailnet IP for the STOS host.
+  // This policy only permits tagged STOS client devices to access TCP 9844.
+  // No broad '*' destination is granted.
+  "tagOwners": {
+    "tag:stos-client": ["autogroup:admin"],
+    "tag:stos-server": ["autogroup:admin"]
+  },
+  "acls": [
+    {
+      "action": "accept",
+      "src": ["tag:stos-client"],
+      "dst": ["100.64.0.10:9844"]
+    }
+  ],
+  "tests": [
+    {
+      "src": "tag:stos-client",
+      "accept": ["100.64.0.10:9844"],
+      "deny": ["100.64.0.10:22", "100.64.0.10:443"]
+    }
+  ]
+}

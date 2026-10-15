@@ -1,0 +1,44 @@
+# STARTER CONFIGURATION. Validate every key against the exact Headscale release.
+# See official Headscale configuration documentation before deployment.
+server_url: https://vpn.example.net
+listen_addr: 0.0.0.0:8080
+metrics_listen_addr: 127.0.0.1:9090
+grpc_listen_addr: 127.0.0.1:50443
+grpc_allow_insecure: false
+
+noise:
+  private_key_path: /var/lib/headscale/noise_private.key
+
+prefixes:
+  v4: 100.64.0.0/10
+  v6: fd7a:115c:a1e0::/48
+  allocation: sequential
+
+database:
+  type: sqlite
+  sqlite:
+    path: /var/lib/headscale/db.sqlite
+
+# Policy file uses the starter ACL policy in config/policy.hujson.
+policy:
+  mode: file
+  path: /etc/headscale/policy.hujson
+
+# DERP / relay configuration is deployment-specific. Confirm the syntax for the
+# selected Headscale version and configure a reliable relay strategy as needed.
+derp:
+  server:
+    enabled: false
+  urls:
+    - https://controlplane.tailscale.com/derpmap/default
+  paths: []
+  auto_update_enabled: true
+  update_frequency: 24h
+
+# Do not enable insecure admin endpoints. Keep logs and backups access-controlled.
+log:
+  level: info
+  format: text
+
+unix_socket: /var/run/headscale/headscale.sock
+unix_socket_permission: "0770"

@@ -1,0 +1,73 @@
+services:
+  headscale:
+    image: ${HEADSCALE_IMAGE}
+    container_name: stos-headscale
+    command: serve
+    restart: unless-stopped
+    volumes:
+      - ./config/headscale.yaml:/etc/headscale/config.yaml:ro
+      - headscale-data:/var/lib/headscale
+      - ./config/policy.hujson:/etc/headscale/policy.hujson:ro
+    expose:
+      - "8080"
+    networks:
+      - control
+    healthcheck:
+      test: ["CMD", "headscale", "health"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+
+  caddy:
+    image: ${CADDY_IMAGE}
+    container_name: stos-control-proxy
+    restart: unless-stopped
+    environment:
+      CONTROL_FQDN: ${CONTROL_FQDN}
+    ports:
+      - "443:443"
+      - "443:443/udp"
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy-data:/data
+      - caddy-config:/config
+    networks:
+      - control
+    depends_on:
+      - headscale
+    security_opt:
+      - no-new-privileges:true
+
+  dashboard:
+    image: ${DASHBOARD_IMAGE}
+    container_name: stos-network-dashboard
+    working_dir: /app
+    command: ["sh", "-c", "pip install --no-cache-dir -r requirements.txt && uvicorn app:app --host 0.0.0.0 --port 8787"]
+    restart: unless-stopped
+    environment:
+      DASHBOARD_SECRET: ${DASHBOARD_SECRET}
+      CONTROL_FQDN: ${CONTROL_FQDN}
+    volumes:
+      - ./dashboard:/app:ro
+    ports:
+      - "127.0.0.1:8787:8787"
+    networks:
+      - control
+    security_opt:
+      - no-new-privileges:true
+    read_only: true
+    tmpfs:
+      - /tmp
+
+networks:
+  control:
+    driver: bridge
+
+volumes:
+  headscale-data:
+  caddy-data:
+  caddy-config:
